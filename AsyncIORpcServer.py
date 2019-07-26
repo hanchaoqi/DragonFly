@@ -53,20 +53,40 @@ class AsyncIORpcServer:
                     print("ERROR EVENT [{}] [{}]".format(fd, event))
 
     def handle_conn(self, sock):
-        conn, addr = sock.accept()
-        conn.setblocking(False)
+        try:
+            conn, addr = sock.accept()
+        except Exception as e:
+            print(str(e))
+        else:
+            conn.setblocking(False)
 
-        self.epoll.register(conn, select.EPOLLIN)
-        self.fd_2_socket[conn.fileno()] = conn
-        self.msg_queue[conn] = queue.Queue()
+            self.epoll.register(conn, select.EPOLLIN)
+            self.fd_2_socket[conn.fileno()] = conn
+            self.msg_queue[conn] = queue.Queue()
 
     def handle_req(self, sock):
-        raw_datas = sock.recv(1024)
+        try:
+            req_data = ""
+            while True:
+                raw_data = sock.recv(1024)
+                if raw_data:
+                    req_data += raw_data.decode()
+                if len(raw_data) < 1024:
+                    break
+        except ConnectionResetError as e:
+            print("client reset connection")
+            self.epoll.modify(sock.fileno(), select.EPOLLHUP)
+            return
+        except BlockingIOError as e:
+            print("recv no data")
+            return
 
-        if not raw_datas:
+        if len(req_data) == 0:
+            print("client broken")
+            self.epoll.modify(sock.fileno(), select.EPOLLHUP)
             return
         
-        for data in raw_datas.decode().split("\r\n"):
+        for data in req_data.split("\r\n"):
             req_body = json.loads(data)
             print("[{}] recv {} {}".format(req_body["vkey"], req_body["func"], req_body["params"]))
 
@@ -83,7 +103,6 @@ class AsyncIORpcServer:
         try:
             rsp_body = self.msg_queue[sock].get_nowait()
         except queue.Empty:
-            print("[{}] queue empty".format(sock))
             self.epoll.modify(sock.fileno(), select.EPOLLIN)
         else:
             sock.sendall(rsp_body)
