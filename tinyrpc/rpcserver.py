@@ -3,10 +3,10 @@
 #rpcserver.py
 
 import socket
-import struct
 import json
 import select
 import queue
+from dispatcher import disp
 
 class AIORpcServer:
     def __init__(self, host, port):
@@ -90,9 +90,14 @@ class AIORpcServer:
             req_body = json.loads(data)
             print("[{}] recv {} {}".format(req_body["vkey"], req_body["func"], req_body["params"]))
 
-            result = -1
-            err_code = 0
-            err_code, result = self.dispatcher(req_body["func"], req_body["params"])        
+            try:
+                result = disp[req_body["func"]](req_body["params"])
+            except KeyError:
+                err_code = -1
+                result = 0
+            else:
+                err_code = 0
+ 
             print("[{}] result {} {}".format(req_body["vkey"], err_code, result))
 
             rsp_data = json.dumps({"vkey":req_body["vkey"], "err_code":err_code, "result":result})
@@ -111,15 +116,3 @@ class AIORpcServer:
         self.epoll.unregister(fd)
         self.fd_2_socket[fd].close()
         del self.fd_2_socket[fd]
-
-    def dispatcher(self, func_name, params):
-        err_code = 0
-        result = -1
-        if func_name == "add":
-            result = self.add(params[0], params[1])
-        else:
-            err_code = -1
-        return err_code, result
-
-    def add(self, x, y):
-        return x+y

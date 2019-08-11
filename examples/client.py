@@ -7,7 +7,7 @@ from rpclient import RpClient
 def main():
     client = RpClient("localhost", 8080)
     for i in range(10):
-        result = client.call("add", i, i+3)
+        result = client.call("sum", i, i+3)
         print("result {}".format(result))
         time.sleep(1)
     del client   
