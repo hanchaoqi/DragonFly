@@ -1,12 +1,12 @@
 #!/usr/bin/python3
 #-*-coding:utf-8-*-
-#client.py
+#rpclient.py
 
 import json
 import time
 import socket
 import struct
-from util import set_timeout
+from utils import set_timeout
 
 class RpClient:
     def __init__(self, host, port):
@@ -37,11 +37,3 @@ class RpClient:
         print("call {} {}".format(func, args))
         self.send_command(func, args)
         return self.recv_response()
-
-if __name__ == '__main__':
-    client = RpClient("localhost", 8080)
-    for i in range(10):
-        result = client.call("add", i, i+3)
-        print("result {}".format(result))
-        time.sleep(1)
-    del client

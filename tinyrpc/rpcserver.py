@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #-*-coding:utf-8-*-
-#AsyncIORpcServer.py
+#rpcserver.py
 
 import socket
 import struct
@@ -8,7 +8,7 @@ import json
 import select
 import queue
 
-class AsyncIORpcServer:
+class AIORpcServer:
     def __init__(self, host, port):
         self.sock_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock_.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -85,7 +85,7 @@ class AsyncIORpcServer:
             print("client broken")
             self.epoll.modify(sock.fileno(), select.EPOLLHUP)
             return
-        
+
         for data in req_data.split("\r\n"):
             req_body = json.loads(data)
             print("[{}] recv {} {}".format(req_body["vkey"], req_body["func"], req_body["params"]))
@@ -123,4 +123,3 @@ class AsyncIORpcServer:
 
     def add(self, x, y):
         return x+y
-
