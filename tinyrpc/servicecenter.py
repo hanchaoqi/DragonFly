@@ -16,7 +16,7 @@ class ServiceCenter:
         try:
             self.zk_client.start()
         except Exception as es:
-            print("start zk client timeout %s", e)
+            print("start zk client timeout {}".format(e))
             raise
 
         self.zk_client.ensure_path(ROOT_PATH_)
@@ -81,18 +81,12 @@ class ServiceCenter:
         if self.service_type == "rpc":
             addr = ":".join([host, str(port)])
             return json.dumps({"host_addr":addr}).encode()
-        print("service type [%s] not support", service_type)
+        print("service type [{}] not support".format(service_type))
         raise 
 
     def _decode_node_value(self, node_value):
         if self.service_type == "rpc":
             return json.loads(node_value)["host_addr"]
-        print("service type [%s] not support", self.service_type)
+        print("service type [{}] not support".format(self.service_type))
         raise
-
-
-#保存服务端注册地址：失败的时候要根据错误码考虑进行重试
-#返回服务端注册地址给客户端：使用roundrobin算法
-#保持本地服务列表与服务端同步：注册watcher实现
-#当本地与zk断开连接时，尝试先触发一次同步，然后再返回有效数据
 

@@ -21,7 +21,7 @@ class RpClient:
                 host, port = self.service_addr.split(":")
                 self.sock.connect((host, int(port)))
         except ConnectionError as e:
-            print("connect %s failed %s" % (service_addr, e))
+            print("connect {} failed {}".format(service_addr, e))
             raise ConnectionError
 
     def __del__(self):
