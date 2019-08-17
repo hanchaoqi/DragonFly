@@ -7,23 +7,39 @@ import time
 import socket
 import struct
 from utils import set_timeout
+from servicecenter import ServiceCenter
 
 class RpClient:
-    def __init__(self, host, port):
+    def __init__(self):
+        self.sc_ = ServiceCenter("rpc")
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((host, port))
         self.index = 0
+
+        try:
+            self.service_addr = self.sc_.get_service()
+            if self.service_addr:
+                host, port = self.service_addr.split(":")
+                self.sock.connect((host, int(port)))
+        except ConnectionError as e:
+            print("connect %s failed %s" % (service_addr, e))
+            raise ConnectionError
 
     def __del__(self):
         self.sock.close()
 
-    def send_command(self, func, args):
+    @set_timeout(5)
+    def call(self, func, *args):
+        print("call {} {} {}".format(self.service_addr, func, args))
+        self._send_command(func, args)
+        return self._recv_response()
+
+    def _send_command(self, func, args):
         self.index += 1
         req_body =json.dumps({"vkey":self.index, "func":func, "params":args})
 
         self.sock.sendall(req_body.encode())
 
-    def recv_response(self):
+    def _recv_response(self):
         rsp_body_raw = self.sock.recv(1024)
         rsp_body = json.loads(rsp_body_raw.decode())
 
@@ -32,8 +48,3 @@ class RpClient:
             return -1
         return rsp_body["result"]
 
-    @set_timeout(5)
-    def call(self, func, *args):
-        print("call {} {}".format(func, args))
-        self.send_command(func, args)
-        return self.recv_response()

@@ -15,7 +15,11 @@ def sum(args):
     return result
 
 def main():
-    server = AIORpcServer("localhost", 8080)
+    if len(sys.argv) != 3:
+        print("Usage: python3 server.py [host] [port]")
+        return
+
+    server = AIORpcServer(sys.argv[1], int(sys.argv[2]))
     server.run()
     del server
 

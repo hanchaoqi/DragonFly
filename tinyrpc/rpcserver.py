@@ -7,9 +7,13 @@ import json
 import select
 import queue
 from dispatcher import disp
+from servicecenter import ServiceCenter
 
 class AIORpcServer:
     def __init__(self, host, port):
+        self.sc_ = ServiceCenter("rpc")
+        self.sc_.register_service(host, port)
+
         self.sock_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock_.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock_.setblocking(False)
@@ -90,11 +94,13 @@ class AIORpcServer:
             req_body = json.loads(data)
             print("[{}] recv {} {}".format(req_body["vkey"], req_body["func"], req_body["params"]))
 
+            result = 0
             try:
                 result = disp[req_body["func"]](req_body["params"])
             except KeyError:
-                err_code = -1
-                result = 0
+                err_code = 1
+            except Exception:
+                err_code = 2
             else:
                 err_code = 0
  
