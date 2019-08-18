@@ -9,8 +9,10 @@ import queue
 from dispatcher import disp
 from servicecenter import ServiceCenter
 
+RECV_BUFF_SIZE = 512
+
 class AIORpcServer:
-    def __init__(self, host, port):
+    def __init__(self, host, port, timeout=10):
         self.sc_ = ServiceCenter("rpc")
         self.sc_.register_service(host, port)
 
@@ -20,17 +22,17 @@ class AIORpcServer:
         self.sock_.bind((host, port))
         self.sock_.listen(5)
 
-        self.epoll = select.epoll()
-        self.epoll.register(self.sock_.fileno(), select.EPOLLIN)
+        self.epoll_ = select.epoll()
+        self.epoll_.register(self.sock_.fileno(), select.EPOLLIN)
 
-        self.msg_queue = {}
-        self.fd_2_socket = {self.sock_.fileno():self.sock_}
+        self.msg_queue_ = {}
+        self.fd_2_socket_ = {self.sock_.fileno():self.sock_}
 
-        self.timeout = 10
+        self.timeout_ = timeout # second
 
     def __del__(self):
-        self.epoll.unregister(self.sock_.fileno())
-        self.epoll.close()
+        self.epoll_.unregister(self.sock_.fileno())
+        self.epoll_.close()
         self.sock_.close()
 
     def run(self):
@@ -38,12 +40,12 @@ class AIORpcServer:
 
     def loop(self):
         while True:
-            events = self.epoll.poll(self.timeout)
+            events = self.epoll_.poll(self.timeout_)
             if len(events) == 0:
                 print("no msg")
                 continue
             for fd, event in events:
-                sock = self.fd_2_socket[fd]
+                sock = self.fd_2_socket_[fd]
 
                 if sock == self.sock_:
                     self.handle_conn(sock)
@@ -60,26 +62,26 @@ class AIORpcServer:
         try:
             conn, addr = sock.accept()
         except Exception as e:
-            print(str(e))
+            print("accept failed {}".format(e))
         else:
             conn.setblocking(False)
 
-            self.epoll.register(conn, select.EPOLLIN)
-            self.fd_2_socket[conn.fileno()] = conn
-            self.msg_queue[conn] = queue.Queue()
+            self.epoll_.register(conn, select.EPOLLIN)
+            self.fd_2_socket_[conn.fileno()] = conn
+            self.msg_queue_[conn] = queue.Queue()
 
     def handle_req(self, sock):
         try:
             req_data = ""
             while True:
-                raw_data = sock.recv(1024)
+                raw_data = sock.recv(RECV_BUFF_SIZE)
                 if raw_data:
                     req_data += raw_data.decode()
-                if len(raw_data) < 1024:
+                if len(raw_data) < RECV_BUFF_SIZE:
                     break
         except ConnectionResetError as e:
             print("client reset connection")
-            self.epoll.modify(sock.fileno(), select.EPOLLHUP)
+            self.epoll_.modify(sock.fileno(), select.EPOLLHUP)
             return
         except BlockingIOError as e:
             print("recv no data")
@@ -87,7 +89,7 @@ class AIORpcServer:
 
         if len(req_data) == 0:
             print("client broken")
-            self.epoll.modify(sock.fileno(), select.EPOLLHUP)
+            self.epoll_.modify(sock.fileno(), select.EPOLLHUP)
             return
 
         for data in req_data.split("\r\n"):
@@ -107,18 +109,19 @@ class AIORpcServer:
             print("[{}] result {} {}".format(req_body["vkey"], err_code, result))
 
             rsp_data = json.dumps({"vkey":req_body["vkey"], "err_code":err_code, "result":result})
-            self.msg_queue[sock].put(rsp_data.encode())
-        self.epoll.modify(sock.fileno(), select.EPOLLOUT)
+            self.msg_queue_[sock].put(rsp_data.encode())
+        self.epoll_.modify(sock.fileno(), select.EPOLLOUT)
           
     def handle_rsp(self, sock):
         try:
-            rsp_body = self.msg_queue[sock].get_nowait()
+            rsp_body = self.msg_queue_[sock].get_nowait()
         except queue.Empty:
-            self.epoll.modify(sock.fileno(), select.EPOLLIN)
+            self.epoll_.modify(sock.fileno(), select.EPOLLIN)
         else:
             sock.sendall(rsp_body)
 
     def handle_close(self, fd):
-        self.epoll.unregister(fd)
-        self.fd_2_socket[fd].close()
-        del self.fd_2_socket[fd]
+        self.epoll_.unregister(fd)
+        self.fd_2_socket_[fd].close()
+        del self.fd_2_socket_[fd]
+

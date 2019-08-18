@@ -32,11 +32,13 @@ class ServiceCenter:
 
     def register_service(self, service_host, service_port):
         node_value = self._encode_node_value(service_host, service_port)
+        if not node_value:
+            return
 
         try:
             self.zk_client.create(self.work_node, node_value, ephemeral=True, sequence=True)
         except ZookeeperError as e:
-            print(e)
+            print("register_service failed {}".format(e))
 
     def get_service(self):
         if not len(self.service_list):
@@ -63,6 +65,8 @@ class ServiceCenter:
             for child in self.zk_client.get_children(ROOT_PATH_, watch = watch_handler):
                 work_nodes = self.zk_client.get(ROOT_PATH_ + "/" + child)
                 service_addr = self._decode_node_value(work_nodes[0])
+                if not service_addr:
+                    continue
                 cur_service_list.add(service_addr)
 
             new_service_list = cur_service_list - self.service_list
@@ -75,6 +79,8 @@ class ServiceCenter:
         for child in self.zk_client.get_children(ROOT_PATH_, watch = watch_handler):
             work_nodes = self.zk_client.get(ROOT_PATH_ + "/" + child)
             service_addr = self._decode_node_value(work_nodes[0])
+            if not service_addr:
+                continue
             self.service_list.add(service_addr)
 
     def _encode_node_value(self, host, port):
@@ -82,11 +88,11 @@ class ServiceCenter:
             addr = ":".join([host, str(port)])
             return json.dumps({"host_addr":addr}).encode()
         print("service type [{}] not support".format(service_type))
-        raise 
+        return None 
 
     def _decode_node_value(self, node_value):
         if self.service_type == "rpc":
             return json.loads(node_value)["host_addr"]
         print("service type [{}] not support".format(self.service_type))
-        raise
+        return None
 
