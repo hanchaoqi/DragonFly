@@ -15,14 +15,7 @@ class RpClient:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.index = 0
 
-        try:
-            self.service_addr = self.sc_.get_service()
-            if self.service_addr:
-                host, port = self.service_addr.split(":")
-                self.sock.connect((host, int(port)))
-        except ConnectionError as e:
-            print("connect {} failed {}".format(service_addr, e))
-            raise ConnectionError
+        self._connect()
 
     def __del__(self):
         self.sock.close()
@@ -33,11 +26,24 @@ class RpClient:
         self._send_command(func, args)
         return self._recv_response()
 
+    def _connect(self):
+        try:
+            self.service_addr = self.sc_.get_service()
+            if self.service_addr:
+                host, port = self.service_addr.split(":")
+                self.sock.connect((host, int(port)))
+        except ConnectionError as e:
+            print("connect {} failed {}".format(service_addr, e))
+            raise ConnectionError
+
     def _send_command(self, func, args):
         self.index += 1
         req_body =json.dumps({"vkey":self.index, "func":func, "params":args})
-
-        self.sock.sendall(req_body.encode())
+        try:
+            self.sock.sendall(req_body.encode())
+        except Exception as e:
+            print("send data failed {}".format(e))
+        
 
     def _recv_response(self):
         rsp_body_raw = self.sock.recv(1024)
