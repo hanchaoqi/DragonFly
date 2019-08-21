@@ -8,6 +8,10 @@ class TimeOutException(Exception):
     def __init__(self, error="Timeout"):
         Exception.__init__(self, error)
 
+class RpCallException(Exception):
+    def __init__(self, error="rpc call failed"):
+        Exception.__init__(self, error)
+
 def set_timeout(time_threshold):
     def wrapper(func):
         def handler(signum, frame):
