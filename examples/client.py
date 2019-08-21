@@ -3,7 +3,6 @@ import time
 sys.path.append("../tinyrpc")
 
 from rpclient import RpClient
-from utils import *
 
 def main():
     client = RpClient()

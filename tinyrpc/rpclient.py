@@ -50,7 +50,6 @@ class RpClient:
             print("connect {} failed {}".format(service_addr, e))
             raise e
         print("connect {} success".format(service_addr))
-        return True
 
     def _send_command(self, func, args):
         self.index_ += 1
