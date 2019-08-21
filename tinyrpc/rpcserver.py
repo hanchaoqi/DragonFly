@@ -40,23 +40,28 @@ class AIORpcServer:
 
     def loop(self):
         while True:
-            events = self.epoll_.poll(self.timeout_)
-            if len(events) == 0:
-                print("no msg")
-                continue
-            for fd, event in events:
-                sock = self.fd_2_socket_[fd]
+            try:
+                events = self.epoll_.poll(self.timeout_)
+            except Exception as e:
+                print("poll failed {}".format(e))
+                break
+            else:
+                if len(events) == 0:
+                    print("no msg")
+                    continue
+                for fd, event in events:
+                    sock = self.fd_2_socket_[fd]
 
-                if sock == self.sock_:
-                    self.handle_conn(sock)
-                elif event & select.EPOLLIN:
-                    self.handle_req(sock)
-                elif event & select.EPOLLOUT:
-                    self.handle_rsp(sock)
-                elif event & select.EPOLLHUP:
-                    self.handle_close(fd)
-                else:
-                    print("ERROR EVENT [{}] [{}]".format(fd, event))
+                    if sock == self.sock_:
+                        self.handle_conn(sock)
+                    elif event & select.EPOLLIN:
+                        self.handle_req(sock)
+                    elif event & select.EPOLLOUT:
+                        self.handle_rsp(sock)
+                    elif event & select.EPOLLHUP:
+                        self.handle_close(fd)
+                    else:
+                        print("ERROR EVENT [{}] [{}]".format(fd, event))
 
     def handle_conn(self, sock):
         try:
