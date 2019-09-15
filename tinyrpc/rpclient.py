@@ -57,7 +57,7 @@ class RpClient:
         self.sock_.sendall(req_body.encode())
 
     def _recv_response(self):
-        rsp_body_raw = self.sock_.recv(1024)
+        rsp_body_raw = self.sock_.recv(RECV_BUFF_SIZE)
         rsp_body = json.loads(rsp_body_raw.decode())
 
         if rsp_body["err_code"] != 0:

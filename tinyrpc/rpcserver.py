@@ -11,8 +11,6 @@ from constants import *
 from dispatcher import disp
 from servicecenter import ServiceCenter
 
-RECV_BUFF_SIZE = 512
-
 class AIORpcServer:
     def __init__(self, host, port, timeout=10):
         self.sc_ = ServiceCenter(RPC_NODE_NAME)

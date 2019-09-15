@@ -5,10 +5,7 @@ import json
 import random
 from kazoo.client import KazooClient
 from kazoo.exceptions import *
-
-ZK_HOST_ = "127.0.0.1"
-ZK_PORT_ = 2181
-ROOT_PATH_ = "/sc"
+from constants import *
 
 class ServiceCenter:
     def __init__(self, service_type):
