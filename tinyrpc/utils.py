@@ -3,14 +3,7 @@
 #utils.py
 
 import signal
-
-class TimeOutException(Exception):
-    def __init__(self, error="Timeout"):
-        Exception.__init__(self, error)
-
-class RpCallException(Exception):
-    def __init__(self, error="rpc call failed"):
-        Exception.__init__(self, error)
+import exceptions
 
 def set_timeout(time_threshold):
     def wrapper(func):

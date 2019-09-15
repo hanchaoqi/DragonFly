@@ -6,6 +6,8 @@ import socket
 import json
 import select
 import queue
+from exceptions import *
+from constants import *
 from dispatcher import disp
 from servicecenter import ServiceCenter
 
@@ -13,7 +15,7 @@ RECV_BUFF_SIZE = 512
 
 class AIORpcServer:
     def __init__(self, host, port, timeout=10):
-        self.sc_ = ServiceCenter("rpc")
+        self.sc_ = ServiceCenter(RPC_NODE_NAME)
         self.sc_.register_service(host, port)
 
         self.sock_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
