@@ -1,2 +1,3 @@
 .tinyrpc/__pycache__/
 *.pyc
+tinyrpc/test/

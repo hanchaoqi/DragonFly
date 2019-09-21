@@ -1,19 +1,20 @@
 #!/usr/bin/python3
-#-*-coding:utf-8-*-
-#rpcserver.py
+# -*-coding:utf-8-*-
+# rpcserver.py
 
 import socket
 import json
 import select
 import queue
+from exceptions import *
+from constants import *
 from dispatcher import disp
 from servicecenter import ServiceCenter
 
-RECV_BUFF_SIZE = 512
 
-class AIORpcServer:
+class AIORpcServer(object):
     def __init__(self, host, port, timeout=10):
-        self.sc_ = ServiceCenter("rpc")
+        self.sc_ = ServiceCenter(RPC_NODE_NAME)
         self.sc_.register_service(host, port)
 
         self.sock_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -26,9 +27,9 @@ class AIORpcServer:
         self.epoll_.register(self.sock_.fileno(), select.EPOLLIN)
 
         self.msg_queue_ = {}
-        self.fd_2_socket_ = {self.sock_.fileno():self.sock_}
+        self.fd_2_socket_ = {self.sock_.fileno(): self.sock_}
 
-        self.timeout_ = timeout # second
+        self.timeout_ = timeout   # second
 
     def __del__(self):
         self.epoll_.unregister(self.sock_.fileno())
@@ -110,13 +111,13 @@ class AIORpcServer:
                 err_code = 2
             else:
                 err_code = 0
- 
+
             print("[{}] result {} {}".format(req_body["vkey"], err_code, result))
 
-            rsp_data = json.dumps({"vkey":req_body["vkey"], "err_code":err_code, "result":result})
+            rsp_data = json.dumps({"vkey": req_body["vkey"], "err_code": err_code, "result": result})
             self.msg_queue_[sock].put(rsp_data.encode())
         self.epoll_.modify(sock.fileno(), select.EPOLLOUT)
-          
+
     def handle_rsp(self, sock):
         try:
             rsp_body = self.msg_queue_[sock].get_nowait()
@@ -129,4 +130,5 @@ class AIORpcServer:
         self.epoll_.unregister(fd)
         self.fd_2_socket_[fd].close()
         del self.fd_2_socket_[fd]
+
 
