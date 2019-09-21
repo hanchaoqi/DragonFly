@@ -1,27 +1,31 @@
 #!/usr/bin/python3
-#-*-coding:utf-8-*-
-#servicecenter.py
+# -*-coding:utf-8-*-
+# servicecenter.py
 import json
 import random
 from kazoo.client import KazooClient
 from kazoo.exceptions import *
 from constants import *
+from loadbalance import RandomLoadBalance
 
 
-class ServiceCenter:
+class ServiceCenter(object):
     def __init__(self, service_type):
-        self.zk_client = KazooClient(hosts=":".join([ZK_HOST_, str(ZK_PORT_)]))
+        self.zk_client = KazooClient(hosts=":".join([ZK_HOST, str(ZK_PORT)]))
         try:
             self.zk_client.start()
         except Exception as es:
             print("start zk client timeout {}".format(e))
             raise
 
-        self.zk_client.ensure_path(ROOT_PATH_)
-        self.work_node = ROOT_PATH_ + "/" + service_type.lower()
+        self.zk_client.ensure_path(ROOT_PATH)
+        self.work_node = ROOT_PATH + "/" + service_type.lower()
         self.service_type = service_type
 
         self.service_list = set()
+
+        if RANDOM_LOAD_BALANCE:
+            self.load_balance = RandomLoadBalance()
 
     def __del__(self):
         self.zk_client.stop()
@@ -43,9 +47,10 @@ class ServiceCenter:
             self.get_service_list()
 
         if not len(self.service_list):
+            print("get service list failed")
             return None
 
-        return random.choice([item for item in self.service_list])
+        return self.load_balance.select([item for item in self.service_list])
 
     def get_all_service(self):
         if not len(self.service_list):
@@ -59,9 +64,9 @@ class ServiceCenter:
         def watch_handler(*args):
             print("nodes change")
             cur_service_list = set()
-            
-            for child in self.zk_client.get_children(ROOT_PATH_, watch=watch_handler):
-                work_nodes = self.zk_client.get(ROOT_PATH_ + "/" + child)
+
+            for child in self.zk_client.get_children(ROOT_PATH, watch=watch_handler):
+                work_nodes = self.zk_client.get(ROOT_PATH + "/" + child)
                 service_addr = self._decode_node_value(work_nodes[0])
                 if not service_addr:
                     continue
@@ -74,8 +79,9 @@ class ServiceCenter:
                 self.service_list.remove(s)
             for s in new_service_list:
                 self.service_list.add(s)
-        for child in self.zk_client.get_children(ROOT_PATH_, watch = watch_handler):
-            work_nodes = self.zk_client.get(ROOT_PATH_ + "/" + child)
+
+        for child in self.zk_client.get_children(ROOT_PATH, watch=watch_handler):
+            work_nodes = self.zk_client.get(ROOT_PATH + "/" + child)
             service_addr = self._decode_node_value(work_nodes[0])
             if not service_addr:
                 continue

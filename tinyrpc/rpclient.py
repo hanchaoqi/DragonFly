@@ -12,7 +12,7 @@ from utils import set_timeout
 from servicecenter import ServiceCenter
 
 
-class RpClient:
+class RpClient(object):
     def __init__(self, timeout=SOCK_TIMEOUT_DEFAULT):
         self.sc_ = ServiceCenter(RPC_NODE_NAME)
         self.sock_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -40,8 +40,10 @@ class RpClient:
             return result
 
     def _connect(self):
+        service_addr = None
         try:
             service_addr = self.sc_.get_service()
+
             if service_addr:
                 host, port = service_addr.split(":")
                 self.sock_.connect((host, int(port)))

@@ -1,8 +1,9 @@
 #!/usr/bin/python3
-#-*-coding:utf-8-*-
-#dispatcher.py
+# -*-coding:utf-8-*-
+# dispatcher.py
 import collections
 import functools
+
 
 class Dispatcher(collections.MutableMapping):
     def __init__(self):
@@ -23,7 +24,7 @@ class Dispatcher(collections.MutableMapping):
     def __len__(self):
         return len(self.method_map)
 
-    def add_method(self, func = None, name = None):
+    def add_method(self, func=None, name=None):
         if name and not func:
             functools.partial(self.add_method, name=name)
 
@@ -31,3 +32,4 @@ class Dispatcher(collections.MutableMapping):
         return func
 
 disp = Dispatcher()
+
