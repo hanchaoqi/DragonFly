@@ -1,6 +1,6 @@
 #!/usr/bin/python3
-#-*-coding:utf-8-*-
-#rpclient.py
+# -*-coding:utf-8-*-
+# rpclient.py
 
 import json
 import time
@@ -10,6 +10,7 @@ from exceptions import *
 from constants import *
 from utils import set_timeout
 from servicecenter import ServiceCenter
+
 
 class RpClient:
     def __init__(self, timeout=SOCK_TIMEOUT_DEFAULT):
@@ -21,7 +22,7 @@ class RpClient:
 
     def __del__(self):
         self.sock_.close()
-        self.conn_flag = False      
+        self.conn_flag = False
 
     # 客户端只有此一个对外接口
     @set_timeout(RPC_TIMEOUT_DEFAULT)
@@ -50,7 +51,7 @@ class RpClient:
 
     def _send_command(self, func, args):
         self.index_ += 1
-        req_body =json.dumps({"vkey":self.index_, "func":func, "params":args})
+        req_body = json.dumps({"vkey": self.index_, "func": func, "params": args})
         if not self.conn_flag:
             self._connect()
             self.conn_flag = True
@@ -63,4 +64,5 @@ class RpClient:
         if rsp_body["err_code"] != 0:
             raise RpcException("rpc resp error {}".format(rsp_body["err_code"]))
         return rsp_body["result"]
+
 

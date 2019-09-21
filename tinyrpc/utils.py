@@ -1,9 +1,10 @@
 #!/usr/bin/python3
-#-*-coding:utf-8-*-
-#utils.py
+# -*-coding:utf-8-*-
+# utils.py
 
 import signal
 import exceptions
+
 
 def set_timeout(time_threshold):
     def wrapper(func):

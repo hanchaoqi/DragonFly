@@ -7,6 +7,7 @@ from kazoo.client import KazooClient
 from kazoo.exceptions import *
 from constants import *
 
+
 class ServiceCenter:
     def __init__(self, service_type):
         self.zk_client = KazooClient(hosts=":".join([ZK_HOST_, str(ZK_PORT_)]))
@@ -52,14 +53,14 @@ class ServiceCenter:
 
         if not len(self.service_list):
             return None
-        return  self.service_list
+        return self.service_list
 
     def get_service_list(self):
         def watch_handler(*args):
             print("nodes change")
             cur_service_list = set()
             
-            for child in self.zk_client.get_children(ROOT_PATH_, watch = watch_handler):
+            for child in self.zk_client.get_children(ROOT_PATH_, watch=watch_handler):
                 work_nodes = self.zk_client.get(ROOT_PATH_ + "/" + child)
                 service_addr = self._decode_node_value(work_nodes[0])
                 if not service_addr:
@@ -83,9 +84,9 @@ class ServiceCenter:
     def _encode_node_value(self, host, port):
         if self.service_type == "rpc":
             addr = ":".join([host, str(port)])
-            return json.dumps({"host_addr":addr}).encode()
+            return json.dumps({"host_addr": addr}).encode()
         print("service type [{}] not support".format(service_type))
-        return None 
+        return None
 
     def _decode_node_value(self, node_value):
         if self.service_type == "rpc":
