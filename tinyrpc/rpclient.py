@@ -13,6 +13,7 @@ from servicecenter import ServiceCenter
 
 
 class RpClient(object):
+
     def __init__(self, timeout=SOCK_TIMEOUT_DEFAULT):
         self.sc_ = ServiceCenter(RPC_NODE_NAME)
         self.sock_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -29,8 +30,8 @@ class RpClient(object):
     def call(self, func, *args):
         print("call {} {}".format(func, args))
         try:
-            self._send_command(func, args)
-            result = self._recv_response()
+            self.__send_command(func, args)
+            result = self.__recv_response()
         except socket.timeout as e:
             raise RpcException("rpc call timeout")
         except Exception as e:
@@ -39,7 +40,7 @@ class RpClient(object):
         else:
             return result
 
-    def _connect(self):
+    def __connect(self):
         service_addr = None
         try:
             service_addr = self.sc_.get_service()
@@ -51,15 +52,15 @@ class RpClient(object):
             raise RpcException("connect {} failed {}".format(service_addr, e))
         print("connect {} success".format(service_addr))
 
-    def _send_command(self, func, args):
+    def __send_command(self, func, args):
         self.index_ += 1
         req_body = json.dumps({"vkey": self.index_, "func": func, "params": args})
         if not self.conn_flag:
-            self._connect()
+            self.__connect()
             self.conn_flag = True
         self.sock_.sendall(req_body.encode())
 
-    def _recv_response(self):
+    def __recv_response(self):
         rsp_body_raw = self.sock_.recv(RECV_BUFF_SIZE)
         rsp_body = json.loads(rsp_body_raw.decode())
 

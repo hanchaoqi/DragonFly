@@ -13,6 +13,7 @@ from servicecenter import ServiceCenter
 
 
 class AIORpcServer(object):
+
     def __init__(self, host, port, timeout=10):
         self.sc_ = ServiceCenter(RPC_NODE_NAME)
         self.sc_.register_service(host, port)
@@ -37,9 +38,9 @@ class AIORpcServer(object):
         self.sock_.close()
 
     def run(self):
-        self.loop()
+        self.__loop()
 
-    def loop(self):
+    def __loop(self):
         while True:
             try:
                 events = self.epoll_.poll(self.timeout_)
@@ -54,17 +55,17 @@ class AIORpcServer(object):
                     sock = self.fd_2_socket_[fd]
 
                     if sock == self.sock_:
-                        self.handle_conn(sock)
+                        self.__handle_conn(sock)
                     elif event & select.EPOLLIN:
-                        self.handle_req(sock)
+                        self.__handle_req(sock)
                     elif event & select.EPOLLOUT:
-                        self.handle_rsp(sock)
+                        self.__handle_rsp(sock)
                     elif event & select.EPOLLHUP:
-                        self.handle_close(fd)
+                        self.__handle_close(fd)
                     else:
                         print("ERROR EVENT [{}] [{}]".format(fd, event))
 
-    def handle_conn(self, sock):
+    def __handle_conn(self, sock):
         try:
             conn, addr = sock.accept()
         except Exception as e:
@@ -76,7 +77,7 @@ class AIORpcServer(object):
             self.fd_2_socket_[conn.fileno()] = conn
             self.msg_queue_[conn] = queue.Queue()
 
-    def handle_req(self, sock):
+    def __handle_req(self, sock):
         try:
             req_data = ""
             while True:
@@ -118,7 +119,7 @@ class AIORpcServer(object):
             self.msg_queue_[sock].put(rsp_data.encode())
         self.epoll_.modify(sock.fileno(), select.EPOLLOUT)
 
-    def handle_rsp(self, sock):
+    def __handle_rsp(self, sock):
         try:
             rsp_body = self.msg_queue_[sock].get_nowait()
         except queue.Empty:
@@ -126,7 +127,7 @@ class AIORpcServer(object):
         else:
             sock.sendall(rsp_body)
 
-    def handle_close(self, fd):
+    def __handle_close(self, fd):
         self.epoll_.unregister(fd)
         self.fd_2_socket_[fd].close()
         del self.fd_2_socket_[fd]

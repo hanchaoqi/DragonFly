@@ -2,11 +2,12 @@
 # -*-coding:utf-8-*-
 # loadbalance.py
 import abc
-from exceptions import RpcException
 import random
+from exceptions import RpcException
 
 
 class AbstractLoadBalance(metaclass=abc.ABCMeta):
+
     def select(self, service_list):
         print(service_list)
         if not isinstance(service_list, list):
@@ -30,6 +31,7 @@ class AbstractLoadBalance(metaclass=abc.ABCMeta):
 
 
 class RandomLoadBalance(AbstractLoadBalance):
+
     def do_select(self, service_list):
         all_weight_equal = True
         total_weights = 0
