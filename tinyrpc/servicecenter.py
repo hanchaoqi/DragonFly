@@ -33,7 +33,7 @@ class ServiceCenter(object):
         self.service_list.clear()
 
     def register_service(self, service_host, service_port):
-        node_value = self._encode_node_value(service_host, service_port)
+        node_value = self.__encode_node_value(service_host, service_port)
         if not node_value:
             return
 
@@ -44,7 +44,7 @@ class ServiceCenter(object):
 
     def get_service(self):
         if not len(self.service_list):
-            self.get_service_list()
+            self.__get_service_list()
 
         if not len(self.service_list):
             print("get service list failed")
@@ -52,22 +52,14 @@ class ServiceCenter(object):
 
         return self.load_balance.select([item for item in self.service_list])
 
-    def get_all_service(self):
-        if not len(self.service_list):
-            self.get_service_list()
-
-        if not len(self.service_list):
-            return None
-        return self.service_list
-
-    def get_service_list(self):
+    def __get_service_list(self):
         def watch_handler(*args):
             print("nodes change")
             cur_service_list = set()
 
             for child in self.zk_client.get_children(ROOT_PATH, watch=watch_handler):
                 work_nodes = self.zk_client.get(ROOT_PATH + "/" + child)
-                service_addr = self._decode_node_value(work_nodes[0])
+                service_addr = self.__decode_node_value(work_nodes[0])
                 if not service_addr:
                     continue
                 cur_service_list.add(service_addr)
@@ -82,19 +74,19 @@ class ServiceCenter(object):
 
         for child in self.zk_client.get_children(ROOT_PATH, watch=watch_handler):
             work_nodes = self.zk_client.get(ROOT_PATH + "/" + child)
-            service_addr = self._decode_node_value(work_nodes[0])
+            service_addr = self.__decode_node_value(work_nodes[0])
             if not service_addr:
                 continue
             self.service_list.add(service_addr)
 
-    def _encode_node_value(self, host, port):
+    def __encode_node_value(self, host, port):
         if self.service_type == "rpc":
             addr = ":".join([host, str(port)])
             return json.dumps({"host_addr": addr}).encode()
         print("service type [{}] not support".format(service_type))
         return None
 
-    def _decode_node_value(self, node_value):
+    def __decode_node_value(self, node_value):
         if self.service_type == "rpc":
             return json.loads(node_value)["host_addr"]
         print("service type [{}] not support".format(self.service_type))
