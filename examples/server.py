@@ -1,7 +1,7 @@
 import sys
-sys.path.append("../tinyrpc")
+sys.path.append("../dragonfly")
 
-from rpcserver import AIORpcServer
+from rpcserver import RpcServer
 from dispatcher import disp
 
 @disp.add_method
@@ -19,7 +19,7 @@ def main():
         print("Usage: python3 server.py [host] [port]")
         return
 
-    server = AIORpcServer(sys.argv[1], int(sys.argv[2]))
+    server = RpcServer(sys.argv[1], int(sys.argv[2]))
     server.run()
     del server
 

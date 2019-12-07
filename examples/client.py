@@ -1,6 +1,6 @@
 import sys
 import time
-sys.path.append("../tinyrpc")
+sys.path.append("../dragonfly")
 
 from rpclient import RpClient
 
