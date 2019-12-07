@@ -12,7 +12,7 @@ from dispatcher import disp
 from servicecenter import ServiceCenter
 
 
-class AIORpcServer(object):
+class RpcServer(object):
 
     def __init__(self, host, port, timeout=10):
         self.sc_ = ServiceCenter(RPC_NODE_NAME)
