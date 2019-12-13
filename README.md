@@ -1,2 +1,2 @@
-# TinyRPC
-一个简单的分布式RPC框架
+# DragonFly
+一个轻量级分布式RPC框架
