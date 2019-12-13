@@ -4,7 +4,7 @@
 ## 整体架构
 ![整体架构](documents/整体架构.png)
 
-## 使用说明
+## 使用说明(示例)
 1. 启动zookeeper
 2. constants.py中配置注册中心的zookeeper相关参数
 3. 切到examples目录
